@@ -1,5 +1,5 @@
-import { Dimensions, Modal, ModalProps, StyleSheet } from "react-native";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Dimensions, Modal, ModalProps, StyleSheet, View } from "react-native";
 import {
   Gesture,
   GestureDetector,
@@ -7,8 +7,6 @@ import {
 } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
-  FadeIn,
-  FadeOut,
   interpolate,
   runOnJS,
   useAnimatedStyle,
@@ -16,25 +14,22 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
 
 const DRAG_THRESHOLD = 100;
 const DEVICE_HEIGHT = Dimensions.get("window").height;
 
-const GestureModal = (props: ModalProps) => {
+const GestureModal = ({
+  onClose,
+  ...props
+}: ModalProps & { onClose: () => void }) => {
   const { top } = useSafeAreaInsets();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const distance = useSharedValue(0);
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    setIsOpen(true);
-  }, []);
-
   const onDragThresholdReached = () => {
-    props.onRequestClose();
-    // setTimeout(() => props.onRequestClose(), 0);
+    onClose();
   };
 
   const pan = Gesture.Pan()
@@ -89,23 +84,30 @@ const GestureModal = (props: ModalProps) => {
   });
 
   return (
-    <Modal {...props}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <GestureDetector gesture={pan}>
-          <Animated.View
-            style={[
-              animatedContainerStyle,
-              { top: top + 20, alignSelf: "center" },
-            ]}
-          >
-            {props.children}
-          </Animated.View>
-        </GestureDetector>
-      </GestureHandlerRootView>
+    <Modal onRequestClose={onClose} {...props}>
+      <View style={styles.container}>
+        <BlurView style={StyleSheet.absoluteFillObject} tint="prominent" />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <GestureDetector gesture={pan}>
+            <Animated.View
+              style={[
+                animatedContainerStyle,
+                { top: top + 20, alignSelf: "center" },
+              ]}
+            >
+              {props.children}
+            </Animated.View>
+          </GestureDetector>
+        </GestureHandlerRootView>
+      </View>
     </Modal>
   );
 };
 
 export default GestureModal;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
